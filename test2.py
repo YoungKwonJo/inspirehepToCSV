@@ -1,4 +1,5 @@
 import requests
+import urllib
 from bs4 import BeautifulSoup
 
 result = []
@@ -16,16 +17,26 @@ for record in records:
     published = record.find("b")
     row['published']=published.text
     authors = record.findAll("a",{"class":"authorlink"})
-    #저자수는 10명이 넘지 않는 경우
+    #저자수는 10명이 넘지 않는 경우 가정
     for i in range(10):
         row['authorlink_'+str(i)] = ""
         row['author_'+str(i)] = ""  
     
     for i,author in enumerate(authors):
-        row['authorlink_'+str(i)] = "inspirehep.net"+author['href']
+        row['authorlink_'+str(i)] = "inspirehep.net"+urllib.parse.unquote(author['href'])
         row['author_'+str(i)] =author.text
         if i>9: break
-            
+
+    #기관은 4개가 넘지 않는 경우 가정
+    for i in range(4):
+        row['afflink_'+str(i)] = ""
+        row['aff_'+str(i)] = ""      
+    afflinks = record.findAll("a",{"class":"afflink"})
+    for i,afflink in enumerate(afflinks):
+        row['afflink_'+str(i)] = "inspirehep.net"+urllib.parse.unquote(afflink['href'])
+        row['aff_'+str(i)] =afflink.text
+        if i>3: break
+
     a4doi = record.findAll("a")
     for i in a4doi:
         if "dx.doi.org" in i['href']:
@@ -37,3 +48,5 @@ df = pd.DataFrame(output)
 
 print(df)
 df.to_csv("output.csv")
+
+
